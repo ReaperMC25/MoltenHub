@@ -1,0 +1,1443 @@
+local Players             = game:GetService("Players")
+local RunService          = game:GetService("RunService")
+local UserInputService    = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService        = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local Rayfield = loadstring(game:HttpGet(
+    "https://sirius.menu/rayfield"
+))()
+
+local keySpam         = false
+local spamDelay       = 0.12
+local deathTP         = false
+local lastDeathCFrame
+local loopGoto        = false
+local loopTargetName  = ""
+local autoReset       = false
+local resetDelay      = 2
+local m1Spam          = false
+local m1Delay         = 0.1
+local xczEnabled      = false
+local xczCooldown     = false
+local sideDash        = false
+local sideDashLoaded  = false
+local altBalantTarget = ""
+local altBalantActive = false
+local altBalantBusy   = false
+
+local Window = Rayfield:CreateWindow({
+    Name             = "🔥 MOLTEN HUB",
+    Icon             = 0,
+    LoadingTitle     = "MOLTEN HUB",
+    LoadingSubtitle  = "THE STRONGEST BATTLEGROUNDS",
+    Theme            = "Dark",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings   = false,
+    ConfigurationSaving = {
+        Enabled    = true,
+        FolderName = "MoltenHub",
+        FileName   = "MoltenHub_Config",
+    },
+    Discord = { Enabled = false },
+    KeySystem = false,
+})
+
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+local CombatTab   = Window:CreateTab("Combat",   4483345998)
+local UtilityTab  = Window:CreateTab("Utility",  4483362458)
+
+-- ══════════════════════════════════════════
+--  MOVEMENT TAB
+-- ══════════════════════════════════════════
+
+MovementTab:CreateSection("Side Dash Assist")
+
+MovementTab:CreateToggle({
+    Name         = "🔥 Molten Dash",
+    CurrentValue = false,
+    Flag         = "SideDash",
+    Callback = function(val)
+        sideDash = val
+        if val and not sideDashLoaded then
+            sideDashLoaded = true
+            task.spawn(function()
+                local splash = Instance.new("ScreenGui", playerGui)
+                splash.ResetOnSpawn = false
+                splash.IgnoreGuiInset = true
+                splash.DisplayOrder = 999
+
+                local bg = Instance.new("Frame", splash)
+                bg.Size = UDim2.fromScale(1, 1)
+                bg.BackgroundColor3 = Color3.fromRGB(20, 0, 40)
+                bg.BorderSizePixel = 0
+                bg.BackgroundTransparency = 1
+
+                local grad = Instance.new("UIGradient", bg)
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0,   Color3.fromRGB(76,  0,  130)),
+                    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(138, 43, 226)),
+                    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(75,  0,  130)),
+                    ColorSequenceKeypoint.new(1,   Color3.fromRGB(148, 0,  211)),
+                })
+                grad.Rotation = 45
+
+                local title = Instance.new("TextLabel", bg)
+                title.Size = UDim2.fromScale(1, 0.25)
+                title.Position = UDim2.fromScale(0, 0.28)
+                title.BackgroundTransparency = 1
+                title.Text = "MOLTEN DASH TECH"
+                title.Font = Enum.Font.GothamBold
+                title.TextScaled = true
+                title.TextColor3 = Color3.new(1, 1, 1)
+                title.TextTransparency = 1
+
+                local v3Label = Instance.new("TextLabel", bg)
+                v3Label.Size = UDim2.fromScale(1, 0.12)
+                v3Label.Position = UDim2.fromScale(0, 0.53)
+                v3Label.BackgroundTransparency = 1
+                v3Label.Text = "V3"
+                v3Label.Font = Enum.Font.GothamBold
+                v3Label.TextScaled = true
+                v3Label.TextColor3 = Color3.fromRGB(200, 100, 255)
+                v3Label.TextTransparency = 1
+
+                local credit = Instance.new("TextLabel", bg)
+                credit.Size = UDim2.fromScale(1, 0.07)
+                credit.Position = UDim2.fromScale(0, 0.66)
+                credit.BackgroundTransparency = 1
+                credit.Text = "Made by Molten 🔥"
+                credit.Font = Enum.Font.Code
+                credit.TextScaled = true
+                credit.TextColor3 = Color3.fromRGB(180, 100, 255)
+                credit.TextTransparency = 1
+
+                local barBg = Instance.new("Frame", bg)
+                barBg.Size = UDim2.new(0.6, 0, 0, 6)
+                barBg.Position = UDim2.new(0.2, 0, 0.8, 0)
+                barBg.BackgroundColor3 = Color3.fromRGB(60, 0, 100)
+                barBg.BorderSizePixel = 0
+                barBg.BackgroundTransparency = 1
+                Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
+
+                local barFill = Instance.new("Frame", barBg)
+                barFill.Size = UDim2.fromScale(0, 1)
+                barFill.BackgroundColor3 = Color3.fromRGB(180, 0, 255)
+                barFill.BorderSizePixel = 0
+                Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+
+                local conn
+                conn = RunService.Heartbeat:Connect(function()
+                    if not splash or not splash.Parent then conn:Disconnect() return end
+                    grad.Rotation = (grad.Rotation + 0.5) % 360
+                    local hue = tick() * 0.25 % 1
+                    title.TextColor3 = Color3.fromHSV(hue, 0.4, 1)
+                    v3Label.TextColor3 = Color3.fromHSV((hue + 0.3) % 1, 0.6, 1)
+                    barFill.BackgroundColor3 = Color3.fromHSV((hue + 0.6) % 1, 1, 1)
+                    credit.TextColor3 = Color3.fromHSV((hue + 0.5) % 1, 0.5, 1)
+                end)
+
+                TweenService:Create(bg, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+                task.wait(0.3)
+                TweenService:Create(barBg, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
+                TweenService:Create(title, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+                task.wait(0.35)
+                TweenService:Create(v3Label, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+                task.wait(0.3)
+                TweenService:Create(credit, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+                TweenService:Create(barFill, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.fromScale(1, 1)}):Play()
+                task.wait(2)
+
+                loadstring(game:HttpGet(
+                    "https://raw.githubusercontent.com/Cyborg883/FakeDash/refs/heads/main/Protected_5833389828844912.lua"
+                ))()
+
+                TweenService:Create(bg, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
+                TweenService:Create(title, TweenInfo.new(0.6), {TextTransparency = 1}):Play()
+                TweenService:Create(v3Label, TweenInfo.new(0.6), {TextTransparency = 1}):Play()
+                TweenService:Create(credit, TweenInfo.new(0.6), {TextTransparency = 1}):Play()
+                TweenService:Create(barBg, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
+                task.wait(0.7)
+                conn:Disconnect()
+                splash:Destroy()
+            end)
+        elseif val then
+            Rayfield:Notify({ Title="Molten Dash", Content="Already loaded! 🔥", Duration=2, Image=4483362458 })
+        end
+    end,
+})
+
+MovementTab:CreateSection("Goto / Teleport")
+
+MovementTab:CreateInput({
+    Name = "Target Username",
+    PlaceholderText = "Enter player name...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(val) loopTargetName = val end,
+})
+
+MovementTab:CreateToggle({
+    Name = "Loop Goto", CurrentValue = false, Flag = "LoopGoto",
+    Callback = function(val) loopGoto = val end,
+})
+
+MovementTab:CreateSection("Character")
+
+MovementTab:CreateToggle({
+    Name = "Auto Reset", CurrentValue = false, Flag = "AutoReset",
+    Callback = function(val) autoReset = val end,
+})
+
+MovementTab:CreateSlider({
+    Name = "Reset Delay (sec)", Range = {0.05, 10}, Increment = 0.05,
+    Suffix = "s", CurrentValue = 2, Flag = "ResetDelay",
+    Callback = function(val) resetDelay = val end,
+})
+
+MovementTab:CreateToggle({
+    Name = "Death TP", CurrentValue = false, Flag = "DeathTP",
+    Callback = function(val) deathTP = val end,
+})
+
+-- ══════════════════════════════════════════
+--  COMBAT TAB
+-- ══════════════════════════════════════════
+
+CombatTab:CreateSection("Key Spam")
+CombatTab:CreateToggle({ Name="Key Spam", CurrentValue=false, Flag="KeySpam", Callback=function(val) keySpam=val end })
+CombatTab:CreateSlider({ Name="Spam Delay (sec)", Range={0.02,1}, Increment=0.01, Suffix="s", CurrentValue=0.12, Flag="SpamDelay", Callback=function(val) spamDelay=val end })
+
+CombatTab:CreateSection("M1 / Punch Spam")
+CombatTab:CreateToggle({ Name="M1 Spam", CurrentValue=false, Flag="M1Spam", Callback=function(val) m1Spam=val end })
+CombatTab:CreateSlider({ Name="M1 Delay (sec)", Range={0.02,1}, Increment=0.01, Suffix="s", CurrentValue=0.1, Flag="M1Delay", Callback=function(val) m1Delay=val end })
+
+CombatTab:CreateSection("Techniques")
+CombatTab:CreateToggle({ Name="⚔️ XCZ Tech (Press E)", CurrentValue=false, Flag="XCZTech", Callback=function(val) xczEnabled=val end })
+
+CombatTab:CreateSection("Scripts")
+
+local combatScripts = {
+    { name="👊 Auto Uppercut All",    url="https://raw.githubusercontent.com/gamerscripter90/Jisj/main/autouppercutallcharacter.lua.txt" },
+    { name="⚡ True Instant Twisted",  url="https://api.getpolsec.com/scripts/hosted/2c88af57351658d20eb90be4bbb187e8b6226ea564ff80131ca9fdc96a4d58eb.lua" },
+    { name="💨 BOOMY LoopDash V2",     url="https://api.getpolsec.com/scripts/hosted/84e2bd29cccc0f5302267e4dc952cff6816db4af36416cbd477daaa26d60863d.lua" },
+    { name="🛡️🔥 Molten Auto Block",   url="https://raw.githubusercontent.com/Cyborg883/CombatGUI/refs/heads/main/TSBCombatGUI" },
+    { name="💧 Dripz V2",              url="https://raw.githubusercontent.com/letuankiet09812345-cmyk/Testkiba/refs/heads/main/4cbcd9b905ee3e41.lua.txt" },
+    { name="🗡️ Kiba Tech",             url="https://raw.githubusercontent.com/Defy-cloud/Scripts/refs/heads/main/KibaTech" },
+    { name="🖤🍪 Oreo Dash",            url="https://raw.githubusercontent.com/letuankiet09812345-cmyk/Testkiba/refs/heads/main/Oreo%20Tech%20Script%20By%20YQANTG.txt" },
+    { name="🌸 Kyoto Tech",            url="https://raw.githubusercontent.com/Cyborg883/KyotoTechRework/refs/heads/main/Protected_9378660372508532.lua" },
+    { name="🌀 Floater Lethal",        url="https://api.jnkie.com/api/v1/luascripts/public/a23acf82fb18b827dca096e149ab0272fc74ea9bb8153cd43e44555acb943c86/download" },
+}
+for _, s in ipairs(combatScripts) do
+    local sName, sUrl = s.name, s.url
+    CombatTab:CreateButton({ Name=sName, Callback=function()
+        task.spawn(function()
+            Rayfield:Notify({ Title=sName, Content="Made by Molten 🔥", Duration=3, Image=4483345998 })
+            loadstring(game:HttpGet(sUrl))()
+        end)
+    end })
+end
+
+-- ══════════════════════════════════════════
+--  UTILITY TAB
+-- ══════════════════════════════════════════
+
+UtilityTab:CreateSection("Teleports")
+
+UtilityTab:CreateButton({ Name="📍 Teleport to Spot", Callback=function()
+    local hrp = (player.Character or player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = CFrame.new(438.84, 439.51, -375.48)*CFrame.Angles(0,0.69,0) end
+end })
+UtilityTab:CreateButton({ Name="📍 Teleport 2", Callback=function()
+    local hrp = (player.Character or player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = CFrame.new(-129.75,439.51,-352.24)*CFrame.Angles(-3.14,-0.83,-3.14) end
+end })
+UtilityTab:CreateButton({ Name="📍 Teleport 3", Callback=function()
+    local hrp = (player.Character or player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = CFrame.new(1070,406,23014)*CFrame.Angles(-3.14,0.12,-3.14) end
+end })
+
+UtilityTab:CreateSection("Scripts")
+UtilityTab:CreateButton({ Name="🌙 Void Kill", Callback=function()
+    task.spawn(function()
+        Rayfield:Notify({ Title="Void Kill", Content="Made by Molten 🔥", Duration=3, Image=4483362458 })
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Reallyools/Reallyools/refs/heads/main/VoidKill2.1"))()
+    end)
+end })
+
+UtilityTab:CreateSection("Cosmetics")
+UtilityTab:CreateButton({ Name="💀 Headless", Callback=function()
+    task.spawn(function()
+        Rayfield:Notify({ Title="Headless", Content="Made by Molten 🔥", Duration=3, Image=4483362458 })
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Fe-Headless-122249"))()
+    end)
+end })
+UtilityTab:CreateButton({ Name="🦴 Korblox", Callback=function()
+    task.spawn(function()
+        Rayfield:Notify({ Title="Korblox", Content="Made by Molten 🔥", Duration=3, Image=4483362458 })
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Korblox-All-136498"))()
+    end)
+end })
+
+-- ══════════════════════════════════════════
+--  FARMING SECTION
+-- ══════════════════════════════════════════
+
+UtilityTab:CreateSection("🌾 Farming")
+
+-- ─────────────────────────────────────────
+--  MAIN FARM  (full logic from Main.txt)
+-- ─────────────────────────────────────────
+UtilityTab:CreateButton({
+    Name = "⚔️ Launch Main Farm",
+    Callback = function()
+        task.spawn(function()
+
+            -- ── Services ──
+            local CoreGui     = game:GetService("CoreGui")
+            local TeleService = game:GetService("TeleportService")
+            local GuiSvc      = game:GetService("StarterGui")
+            local RunSvc      = game:GetService("RunService")
+
+            -- ── Destroy old GUI if exists ──
+            local old = CoreGui:FindFirstChild("MoltenMainFarmGui")
+            if old then old:Destroy() end
+
+            -- ══════════════════════════════════════════
+            --  JOB-ID GUI  (styled version of Main.txt GUI)
+            -- ══════════════════════════════════════════
+            local sGui = Instance.new("ScreenGui")
+            sGui.Name           = "MoltenMainFarmGui"
+            sGui.ResetOnSpawn   = false
+            sGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            sGui.DisplayOrder   = 200
+            sGui.Parent         = CoreGui
+
+            -- shadow
+            local shad = Instance.new("Frame", sGui)
+            shad.AnchorPoint = Vector2.new(0.5,0.5)
+            shad.Position    = UDim2.new(0.5,5,0.5,7)
+            shad.Size        = UDim2.new(0,360,0,190)
+            shad.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            shad.BackgroundTransparency = 0.5
+            shad.BorderSizePixel = 0
+            shad.ZIndex = 1
+            Instance.new("UICorner",shad).CornerRadius = UDim.new(0,16)
+
+            -- main frame
+            local mf = Instance.new("Frame", sGui)
+            mf.Name = "MainFrame"
+            mf.AnchorPoint = Vector2.new(0.5,0.5)
+            mf.Position    = UDim2.new(0.5,0,0.5,0)
+            mf.Size        = UDim2.new(0,360,0,190)
+            mf.BackgroundColor3 = Color3.fromRGB(14,14,18)
+            mf.BorderSizePixel  = 0
+            mf.ZIndex = 2
+            mf.Active   = true
+            mf.Draggable = true
+            Instance.new("UICorner",mf).CornerRadius = UDim.new(0,14)
+
+            -- top bar
+            local tb = Instance.new("Frame", mf)
+            tb.Size = UDim2.new(1,0,0,44)
+            tb.BackgroundColor3 = Color3.fromRGB(255,150,0)
+            tb.BorderSizePixel = 0
+            tb.ZIndex = 3
+            Instance.new("UICorner",tb).CornerRadius = UDim.new(0,14)
+            local tbFix = Instance.new("Frame",tb)
+            tbFix.Size = UDim2.new(1,0,0.5,0)
+            tbFix.Position = UDim2.new(0,0,0.5,0)
+            tbFix.BackgroundColor3 = Color3.fromRGB(255,150,0)
+            tbFix.BorderSizePixel = 0 tbFix.ZIndex = 3
+            local tbGrad = Instance.new("UIGradient",tb)
+            tbGrad.Color = ColorSequence.new(Color3.fromRGB(255,130,0),Color3.fromRGB(255,210,50))
+            tbGrad.Rotation = 90
+
+            local titleLbl = Instance.new("TextLabel",tb)
+            titleLbl.Size = UDim2.new(1,-50,1,0)
+            titleLbl.Position = UDim2.new(0,14,0,0)
+            titleLbl.BackgroundTransparency = 1
+            titleLbl.Font = Enum.Font.GothamBold
+            titleLbl.Text = "⚔️  MAIN FARM"
+            titleLbl.TextColor3 = Color3.fromRGB(20,10,0)
+            titleLbl.TextSize = 17
+            titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            titleLbl.ZIndex = 4
+
+            local closeB = Instance.new("TextButton", mf)
+            closeB.Size = UDim2.new(0,28,0,28)
+            closeB.Position = UDim2.new(1,-36,0,8)
+            closeB.BackgroundColor3 = Color3.fromRGB(30,22,0)
+            closeB.BackgroundTransparency = 0.3
+            closeB.Text = "✕"
+            closeB.TextColor3 = Color3.fromRGB(255,200,60)
+            closeB.TextSize = 15
+            closeB.Font = Enum.Font.GothamBold
+            closeB.ZIndex = 5
+            Instance.new("UICorner",closeB).CornerRadius = UDim.new(1,0)
+            closeB.MouseButton1Click:Connect(function() sGui:Destroy() end)
+
+            local subLbl = Instance.new("TextLabel",mf)
+            subLbl.Size = UDim2.new(1,-28,0,20)
+            subLbl.Position = UDim2.new(0,14,0,50)
+            subLbl.BackgroundTransparency = 1
+            subLbl.Font = Enum.Font.Gotham
+            subLbl.Text = "Paste a Job ID to join a specific server"
+            subLbl.TextColor3 = Color3.fromRGB(150,130,90)
+            subLbl.TextSize = 12
+            subLbl.TextXAlignment = Enum.TextXAlignment.Left
+            subLbl.ZIndex = 3
+
+            -- input bg
+            local inBg = Instance.new("Frame",mf)
+            inBg.Size = UDim2.new(1,-28,0,36)
+            inBg.Position = UDim2.new(0,14,0,76)
+            inBg.BackgroundColor3 = Color3.fromRGB(22,20,28)
+            inBg.BorderSizePixel = 0
+            inBg.ZIndex = 3
+            Instance.new("UICorner",inBg).CornerRadius = UDim.new(0,8)
+            local inStroke = Instance.new("UIStroke",inBg)
+            inStroke.Color = Color3.fromRGB(255,160,0)
+            inStroke.Thickness = 1.2
+            inStroke.Transparency = 0.55
+
+            local jobInput = Instance.new("TextBox",inBg)
+            jobInput.Name = "PasteJobID"
+            jobInput.Size = UDim2.new(1,-12,1,0)
+            jobInput.Position = UDim2.new(0,8,0,0)
+            jobInput.BackgroundTransparency = 1
+            jobInput.Font = Enum.Font.Code
+            jobInput.PlaceholderText = "Paste Job ID here..."
+            jobInput.PlaceholderColor3 = Color3.fromRGB(85,75,55)
+            jobInput.Text = ""
+            jobInput.TextColor3 = Color3.fromRGB(255,215,110)
+            jobInput.TextSize = 13
+            jobInput.TextXAlignment = Enum.TextXAlignment.Left
+            jobInput.ClearTextOnFocus = false
+            jobInput.ZIndex = 4
+
+            local copyB = Instance.new("TextButton",mf)
+            copyB.Size = UDim2.new(0.47,-7,0,38)
+            copyB.Position = UDim2.new(0,14,0,122)
+            copyB.BackgroundColor3 = Color3.fromRGB(38,32,12)
+            copyB.BorderSizePixel = 0
+            copyB.Text = "📋  Copy Job ID"
+            copyB.TextColor3 = Color3.fromRGB(255,200,60)
+            copyB.TextSize = 13
+            copyB.Font = Enum.Font.GothamBold
+            copyB.ZIndex = 3
+            Instance.new("UICorner",copyB).CornerRadius = UDim.new(0,9)
+            local cStroke = Instance.new("UIStroke",copyB)
+            cStroke.Color = Color3.fromRGB(255,160,0) cStroke.Thickness = 1.2 cStroke.Transparency = 0.4
+
+            local joinB = Instance.new("TextButton",mf)
+            joinB.Name = "JoinGame"
+            joinB.Size = UDim2.new(0.47,-7,0,38)
+            joinB.Position = UDim2.new(0.5,7,0,122)
+            joinB.BackgroundColor3 = Color3.fromRGB(255,145,0)
+            joinB.BorderSizePixel = 0
+            joinB.Text = "🚀  Join Server"
+            joinB.TextColor3 = Color3.fromRGB(20,10,0)
+            joinB.TextSize = 13
+            joinB.Font = Enum.Font.GothamBold
+            joinB.ZIndex = 3
+            Instance.new("UICorner",joinB).CornerRadius = UDim.new(0,9)
+
+            local hintLbl = Instance.new("TextLabel",mf)
+            hintLbl.Size = UDim2.new(1,-28,0,16)
+            hintLbl.Position = UDim2.new(0,14,0,167)
+            hintLbl.BackgroundTransparency = 1
+            hintLbl.Font = Enum.Font.Gotham
+            hintLbl.Text = "🔥 Molten Hub  •  Main Farm"
+            hintLbl.TextColor3 = Color3.fromRGB(85,75,45)
+            hintLbl.TextSize = 11
+            hintLbl.TextXAlignment = Enum.TextXAlignment.Center
+            hintLbl.ZIndex = 3
+
+            -- button logic
+            copyB.MouseButton1Click:Connect(function()
+                pcall(function() setclipboard(game.JobId) end)
+                GuiSvc:SetCore("SendNotification", {Title="Main Farm", Text="Job ID copied! ✅"})
+            end)
+
+            joinB.MouseButton1Click:Connect(function()
+                pcall(function()
+                    if CoreGui:FindFirstChild("RobloxPromptGui") and CoreGui.RobloxPromptGui:FindFirstChild("promptOverlay") then
+                        CoreGui.RobloxPromptGui.promptOverlay.Visible = false
+                    end
+                end)
+                local ok, err = pcall(function()
+                    TeleService:TeleportToPlaceInstance(game.PlaceId, jobInput.Text, Players.LocalPlayer)
+                end)
+                if not ok then
+                    GuiSvc:SetCore("SendNotification", {Title="Main Farm", Text="Error: "..tostring(err)})
+                else
+                    GuiSvc:SetCore("SendNotification", {Title="Main Farm", Text="Joining server... 🚀"})
+                end
+            end)
+
+            -- slide-in anim
+            mf.BackgroundTransparency = 1
+            mf.Position = UDim2.new(0.5,0,1.5,0)
+            TweenService:Create(mf, TweenInfo.new(0.45,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {
+                Position = UDim2.new(0.5,0,0.5,0),
+                BackgroundTransparency = 0
+            }):Play()
+
+            -- ══════════════════════════════════════════
+            --  MAIN FARM SCRIPT LOGIC  (from Main.txt)
+            -- ══════════════════════════════════════════
+            -- Load Phantasm script
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ATrainz/Phantasm/refs/heads/main/Games/TSB.lua"))()
+            task.wait(10)
+
+            -- CONFIGURATIONS
+            local SELECTED_MOVE      = "Scatter"
+            local TIME_AFTER_SPAWN   = 0.4
+            local SPAM_DURATION      = 3
+            local SPAM_INTERVAL      = 0.3
+            local TIME_AFTER_SPAM    = 2
+            local ADDITIONAL_KILLS   = 500
+            local MAX_TOTAL_KILLS    = 10000
+            local TELEPORT_ACTIVE    = true
+            local TP_POSITION        = Vector3.new(438.30792236328125, 439.51055908203125, -375.7077331542969)
+            local SPIN_EMOTE_ACTIVE  = true
+            local ANTI_AFK_ACTIVE    = true
+            local ANTI_MOD_ACTIVE    = true
+
+            local totalKills          = 0
+            local initialKillsRecorded = false
+            local initialKillsValue   = 0
+
+            -- Anti-AFK
+            if ANTI_AFK_ACTIVE then
+                pcall(function()
+                    local VU = game:GetService("VirtualUser")
+                    Players.LocalPlayer.Idled:Connect(function()
+                        VU:CaptureController()
+                        VU:ClickButton2(Vector2.new())
+                    end)
+                end)
+            end
+
+            -- Anti-Mod
+            local moderatorIDs = {
+                268312397,2627262431,82610981,292707170,449404798,221681529,
+                41022405,56721213,38307780,2039323684,1041867508,7340338226,
+                1001242712,2992126732,3235334930,8172452618,8182327909,6075366524,
+                8217675225,5554257146,3629864555,7753754636,4354859764,7819468433,
+                8073683106,6085229191,3027915029,8100644723,8164557160,5500012275,
+                278097946,422755031,108098587,77342385
+            }
+            if ANTI_MOD_ACTIVE then
+                local function checkMods()
+                    for _, p in pairs(Players:GetPlayers()) do
+                        if table.find(moderatorIDs, p.UserId) then
+                            pcall(function() Players.LocalPlayer:Kick("Moderator detected: "..p.Name) end)
+                            return true
+                        end
+                    end
+                    return false
+                end
+                task.spawn(function()
+                    while true do if checkMods() then break end task.wait(0.6) end
+                end)
+                Players.LocalPlayer.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    task.spawn(function()
+                        while true do if checkMods() then break end task.wait(0.6) end
+                    end)
+                end)
+            end
+
+            local function closeGame()
+                GuiSvc:SetCore("SendNotification", {Title="Total Target Reached", Text="Closing game... Total: "..totalKills.." kills", Duration=5})
+                task.wait(3) game:Shutdown()
+            end
+
+            local function reconnectToServer()
+                if totalKills >= MAX_TOTAL_KILLS then closeGame() return end
+                local cjid = game.JobId
+                if cjid then
+                    TeleService:TeleportToPlaceInstance(game.PlaceId, cjid, Players.LocalPlayer)
+                    task.wait(5)
+                end
+                TeleService:Teleport(game.PlaceId)
+            end
+
+            -- Kill tracker
+            task.spawn(function()
+                local ls, kills
+                repeat task.wait(1) ls = Players.LocalPlayer:FindFirstChild("leaderstats") until ls
+                repeat task.wait(1) kills = ls:FindFirstChild("Kills") until kills
+                if not initialKillsRecorded then
+                    initialKillsValue = kills.Value
+                    totalKills = initialKillsValue
+                    initialKillsRecorded = true
+                end
+                while true do
+                    if kills and kills.Value then
+                        totalKills = kills.Value
+                        if totalKills >= initialKillsValue + ADDITIONAL_KILLS then
+                            GuiSvc:SetCore("SendNotification", {Title="Kill Target Reached", Text="Reconnecting... ("..totalKills.."/"..MAX_TOTAL_KILLS..")", Duration=3})
+                            reconnectToServer() break
+                        end
+                        if totalKills >= MAX_TOTAL_KILLS then closeGame() break end
+                    end
+                    task.wait(1)
+                end
+            end)
+
+            -- Teleport loop
+            if TELEPORT_ACTIVE then
+                task.spawn(function()
+                    repeat task.wait() until Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    while true do
+                        local c = Players.LocalPlayer.Character
+                        if c and c:FindFirstChild("HumanoidRootPart") then
+                            c.HumanoidRootPart.CFrame = CFrame.new(TP_POSITION)
+                        end
+                        task.wait(0.01)
+                    end
+                end)
+            end
+
+            -- Spin emote
+            if SPIN_EMOTE_ACTIVE then
+                local function spinEmote()
+                    local args = {[1]={["Goal"]="Emote Spin"}}
+                    while true do
+                        local c = Players.LocalPlayer.Character
+                        if c and c:FindFirstChild("Communicate") then
+                            c.Communicate:FireServer(unpack(args))
+                        end
+                        task.wait(3)
+                    end
+                end
+                local function onCharAdded(char)
+                    if _G.spinThread then pcall(function() coroutine.close(_G.spinThread) end) end
+                    _G.spinThread = coroutine.create(spinEmote)
+                    coroutine.resume(_G.spinThread)
+                end
+                Players.LocalPlayer.CharacterAdded:Connect(onCharAdded)
+                if Players.LocalPlayer.Character then onCharAdded(Players.LocalPlayer.Character) end
+            end
+
+            -- Move farming loop
+            local moveArgs
+            local processedHumanoids = {}
+            local defeatedCount = 0
+            local canUseMove = false
+
+            local function resetPlayer()
+                local c = Players.LocalPlayer.Character
+                if not c then return end
+                local hum = c:FindFirstChildOfClass("Humanoid")
+                if hum then pcall(function() hum.Health = 0 end) end
+                task.wait(0.1)
+                pcall(function() c:BreakJoints() end)
+                task.wait(0.1)
+                pcall(function() Players.LocalPlayer:LoadCharacter() end)
+            end
+
+            local function countDefeated()
+                local c = Players.LocalPlayer.Character
+                if not c or not c:FindFirstChild("HumanoidRootPart") then return end
+                local region = Region3.new(
+                    c.HumanoidRootPart.Position - Vector3.new(20,20,20),
+                    c.HumanoidRootPart.Position + Vector3.new(20,20,20)
+                )
+                for _, part in ipairs(workspace:FindPartsInRegion3(region,nil,math.huge)) do
+                    local hum = part.Parent:FindFirstChildOfClass("Humanoid")
+                    if hum and hum.Health <= 0 and not processedHumanoids[hum] then
+                        defeatedCount = defeatedCount + 1
+                        processedHumanoids[hum] = true
+                    end
+                end
+            end
+
+            local function spamMove(remote)
+                if not canUseMove then return end
+                local st = tick()
+                while tick()-st < SPAM_DURATION do
+                    remote:FireServer(unpack(moveArgs))
+                    task.wait(SPAM_INTERVAL)
+                end
+                task.wait(TIME_AFTER_SPAM)
+                resetPlayer()
+            end
+
+            local function setupCharacter(character)
+                local hrp    = character:WaitForChild("HumanoidRootPart",10)
+                local remote = character:WaitForChild("Communicate",10)
+                local bp     = Players.LocalPlayer:WaitForChild("Backpack",10)
+                if not hrp or not remote or not bp then return end
+                local moveTool = bp:FindFirstChild(SELECTED_MOVE)
+                while not moveTool do task.wait(1) moveTool = bp:FindFirstChild(SELECTED_MOVE) end
+                moveArgs = {[1]={["Tool"]=moveTool,["Goal"]="Console Move",["ToolName"]=SELECTED_MOVE}}
+                canUseMove = false
+                task.wait(TIME_AFTER_SPAWN)
+                canUseMove = true
+                task.spawn(function()
+                    while character and character.Parent do
+                        countDefeated()
+                        if defeatedCount >= 2 and canUseMove then
+                            spamMove(remote)
+                            defeatedCount = 0
+                            table.clear(processedHumanoids)
+                            canUseMove = false
+                            task.wait(TIME_AFTER_SPAWN)
+                            canUseMove = true
+                        end
+                        task.wait(1)
+                    end
+                end)
+            end
+
+            Players.LocalPlayer.CharacterAdded:Connect(setupCharacter)
+            if Players.LocalPlayer.Character then setupCharacter(Players.LocalPlayer.Character) end
+
+            task.wait(10)
+            local c = Players.LocalPlayer.Character
+            if c and c:FindFirstChild("Humanoid") then c.Humanoid.Health = 0 end
+
+            Rayfield:Notify({ Title="Main Farm", Content="✅ Running! GUI + Farm active.", Duration=4, Image=4483362458 })
+        end)
+    end,
+})
+
+-- ─────────────────────────────────────────
+--  ALT FARM  (full logic from Alts.txt)
+-- ─────────────────────────────────────────
+UtilityTab:CreateButton({
+    Name = "🤖 Launch Alt Farm",
+    Callback = function()
+        task.spawn(function()
+
+            local CoreGui  = game:GetService("CoreGui")
+            local GuiSvc   = game:GetService("StarterGui")
+            local RunSvc   = game:GetService("RunService")
+
+            -- Destroy old
+            local old = CoreGui:FindFirstChild("MoltenAltFarmGui")
+            if old then old:Destroy() end
+
+            -- ══════════════════════════════════════════
+            --  ALT FARM BACKGROUND SYSTEMS (from Alts.txt)
+            -- ══════════════════════════════════════════
+
+            -- FPS cap
+            pcall(function() setfpscap(10) end)
+
+            -- Anti-AFK
+            pcall(function()
+                local VU = game:GetService("VirtualUser")
+                Players.LocalPlayer.Idled:Connect(function()
+                    VU:CaptureController() VU:ClickButton2(Vector2.new())
+                end)
+            end)
+
+            -- Anti-Mod
+            local modIDs = {
+                268312397,2627262431,82610981,292707170,449404798,221681529,
+                41022405,56721213,38307780,2039323684,1041867508,7340338226,
+                1001242712,2992126732,3235334930,8172452618,8182327909,6075366524,
+                8217675225,5554257146,3629864555,7753754636,4354859764,7819468433,
+                8073683106,6085229191,3027915029,8100644723,8164557160,5500012275,
+                278097946,422755031,108098587,77342385
+            }
+            local function checkMods()
+                for _, p in pairs(Players:GetPlayers()) do
+                    if table.find(modIDs, p.UserId) then
+                        pcall(function() Players.LocalPlayer:Kick("Moderator detected: "..p.Name) end)
+                        return true
+                    end
+                end
+                return false
+            end
+
+            -- Teleport loop to farm spot (stops when GUI is closed)
+            local altFarmActive = true
+            local altTpPosition = Vector3.new(438.30792236328125, 439.51055908203125, -375.7077331542969)
+            task.spawn(function()
+                while altFarmActive do
+                    local c = Players.LocalPlayer.Character
+                    if c and c:FindFirstChild("HumanoidRootPart") then
+                        pcall(function() c.HumanoidRootPart.CFrame = CFrame.new(altTpPosition) end)
+                    end
+                    task.wait(0.12)
+                end
+            end)
+
+            -- Noclip
+            local noclipEnabled = true
+            local function disableCollisions(char)
+                if not char then return end
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                        pcall(function() part.CanCollide = false end)
+                    end
+                end
+            end
+            local function startNoclipLoop(char)
+                task.spawn(function()
+                    while char and char.Parent do
+                        if noclipEnabled then disableCollisions(char) end
+                        task.wait(0.5)
+                    end
+                end)
+            end
+            Players.LocalPlayer.CharacterAdded:Connect(function(char)
+                task.wait(0.05)
+                if noclipEnabled then disableCollisions(char) end
+                startNoclipLoop(char)
+            end)
+            if Players.LocalPlayer.Character then
+                disableCollisions(Players.LocalPlayer.Character)
+                startNoclipLoop(Players.LocalPlayer.Character)
+            end
+
+            -- Anti-Mod (single loop, not respawned on each CharacterAdded)
+            local altModActive = true
+            task.spawn(function()
+                while altModActive do
+                    if checkMods() then break end
+                    task.wait(0.6)
+                end
+            end)
+
+            -- Nuclear reset: force-kill local character and wait for respawn
+            local nuclearBusy = false
+            local function nuclearReset()
+                if nuclearBusy then return end
+                nuclearBusy = true
+                local c = Players.LocalPlayer.Character
+                if c then
+                    -- try Humanoid death first
+                    local hum = c:FindFirstChildOfClass("Humanoid")
+                    if hum then pcall(function() hum.Health = 0 end) end
+                    task.wait(0.1)
+                    -- break joints as backup
+                    pcall(function() c:BreakJoints() end)
+                    task.wait(0.1)
+                    -- force LoadCharacter as final guarantee
+                    pcall(function() Players.LocalPlayer:LoadCharacter() end)
+                    -- wait for new character
+                    Players.LocalPlayer.CharacterAdded:Wait()
+                    task.wait(0.5)
+                end
+                nuclearBusy = false
+            end
+
+            -- Script state
+            local selectedTargets = {} -- { [userId] = playerName }
+            local isScriptActive  = false
+            local monitorCoro     = nil
+
+            local function getSelectedCount()
+                local n = 0
+                for _ in pairs(selectedTargets) do n = n + 1 end
+                return n
+            end
+
+            -- Monitor all selected targets
+            local function monitorTarget()
+                if getSelectedCount() == 0 then return end
+
+                local function onTargetDied()
+                    if not isScriptActive then return end
+                    local myHum = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    if myHum and myHum.Health > 0 then
+                        task.wait(1.5)
+                        nuclearReset()
+                    end
+                end
+
+                local function bindChar(char)
+                    if not char then return end
+                    local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 5)
+                    if not hum then return end
+                    local fired = false -- prevent Died + poll both triggering
+                    hum.Died:Connect(function()
+                        if isScriptActive and not fired then
+                            fired = true
+                            onTargetDied()
+                        end
+                    end)
+                    -- Fallback poll: catches cases where Died event doesn't fire
+                    task.spawn(function()
+                        while isScriptActive and char.Parent and hum.Health > 0 do
+                            task.wait(0.15)
+                        end
+                        if isScriptActive and char.Parent and not fired and hum.Health <= 0 then
+                            fired = true
+                            onTargetDied()
+                        end
+                    end)
+                end
+
+                local connections = {}
+                local function watchPlayer(p)
+                    if not p or p == Players.LocalPlayer then return end
+                    if p.Character then bindChar(p.Character) end
+                    local conn = p.CharacterAdded:Connect(function(char)
+                        task.wait(0.1) -- let character load
+                        bindChar(char)
+                    end)
+                    table.insert(connections, conn)
+                end
+
+                for uid, _ in pairs(selectedTargets) do
+                    local p = Players:GetPlayerByUserId(uid)
+                    if p then watchPlayer(p) end
+                end
+
+                local addedConn = Players.PlayerAdded:Connect(function(p)
+                    if selectedTargets[p.UserId] then watchPlayer(p) end
+                end)
+
+                while isScriptActive do task.wait(0.2) end
+
+                addedConn:Disconnect()
+                for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
+            end
+
+            -- ══════════════════════════════════════════
+            --  ALT FARM GUI  (styled)
+            -- ══════════════════════════════════════════
+            local sGui = Instance.new("ScreenGui")
+            sGui.Name           = "MoltenAltFarmGui"
+            sGui.ResetOnSpawn   = false
+            sGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            sGui.DisplayOrder   = 210
+            sGui.Parent         = CoreGui
+
+            -- shadow
+            local shad = Instance.new("Frame",sGui)
+            shad.AnchorPoint = Vector2.new(0.5,0.5)
+            shad.Position    = UDim2.new(0.5,5,0.5,7)
+            shad.Size        = UDim2.new(0,300,0,165)
+            shad.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            shad.BackgroundTransparency = 0.5
+            shad.BorderSizePixel = 0 shad.ZIndex = 1
+            Instance.new("UICorner",shad).CornerRadius = UDim.new(0,16)
+
+            -- main frame
+            local mf = Instance.new("Frame",sGui)
+            mf.Name = "MainFrame"
+            mf.AnchorPoint = Vector2.new(0.5,0.5)
+            mf.Position    = UDim2.new(0.5,0,1.5,0)
+            mf.Size        = UDim2.new(0,300,0,165)
+            mf.BackgroundColor3 = Color3.fromRGB(13,13,18)
+            mf.BorderSizePixel  = 0
+            mf.ZIndex = 2 mf.Active = true mf.Draggable = true
+            Instance.new("UICorner",mf).CornerRadius = UDim.new(0,14)
+
+            -- top bar
+            local tb = Instance.new("Frame",mf)
+            tb.Size = UDim2.new(1,0,0,44)
+            tb.BackgroundColor3 = Color3.fromRGB(25,50,200)
+            tb.BorderSizePixel = 0 tb.ZIndex = 3
+            Instance.new("UICorner",tb).CornerRadius = UDim.new(0,14)
+            local tbFix = Instance.new("Frame",tb)
+            tbFix.Size = UDim2.new(1,0,0.5,0)
+            tbFix.Position = UDim2.new(0,0,0.5,0)
+            tbFix.BackgroundColor3 = Color3.fromRGB(25,50,200)
+            tbFix.BorderSizePixel = 0 tbFix.ZIndex = 3
+            local tbGrad = Instance.new("UIGradient",tb)
+            tbGrad.Color = ColorSequence.new(Color3.fromRGB(15,35,210),Color3.fromRGB(70,110,255))
+            tbGrad.Rotation = 90
+
+            local titleLbl = Instance.new("TextLabel",tb)
+            titleLbl.Size = UDim2.new(1,-50,1,0)
+            titleLbl.Position = UDim2.new(0,14,0,0)
+            titleLbl.BackgroundTransparency = 1
+            titleLbl.Font = Enum.Font.GothamBold
+            titleLbl.Text = "🤖  ALT FARM"
+            titleLbl.TextColor3 = Color3.fromRGB(210,225,255)
+            titleLbl.TextSize = 17
+            titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            titleLbl.ZIndex = 4
+
+            -- Status badge
+            local statusBadge = Instance.new("Frame",mf)
+            statusBadge.Size = UDim2.new(0,100,0,20)
+            statusBadge.Position = UDim2.new(1,-114,0,51)
+            statusBadge.BackgroundColor3 = Color3.fromRGB(18,18,28)
+            statusBadge.BorderSizePixel = 0 statusBadge.ZIndex = 3
+            Instance.new("UICorner",statusBadge).CornerRadius = UDim.new(1,0)
+            local sStroke = Instance.new("UIStroke",statusBadge)
+            sStroke.Color = Color3.fromRGB(70,70,170) sStroke.Thickness = 1
+
+            local statusLbl = Instance.new("TextLabel",statusBadge)
+            statusLbl.Size = UDim2.fromScale(1,1)
+            statusLbl.BackgroundTransparency = 1
+            statusLbl.Font = Enum.Font.GothamBold
+            statusLbl.Text = "● IDLE"
+            statusLbl.TextColor3 = Color3.fromRGB(110,110,170)
+            statusLbl.TextSize = 11 statusLbl.ZIndex = 4
+
+            -- Close btn
+            local closeB = Instance.new("TextButton",mf)
+            closeB.Size = UDim2.new(0,28,0,28)
+            closeB.Position = UDim2.new(1,-36,0,8)
+            closeB.BackgroundColor3 = Color3.fromRGB(15,18,55)
+            closeB.BackgroundTransparency = 0.3
+            closeB.Text = "✕"
+            closeB.TextColor3 = Color3.fromRGB(140,170,255)
+            closeB.TextSize = 15 closeB.Font = Enum.Font.GothamBold
+            closeB.ZIndex = 5
+            Instance.new("UICorner",closeB).CornerRadius = UDim.new(1,0)
+            closeB.MouseButton1Click:Connect(function()
+                isScriptActive = false
+                altFarmActive  = false
+                altModActive   = false
+                sGui:Destroy()
+            end)
+
+            -- ── helper: update the "Targets: X selected" label ──
+            local savedLbl -- forward-declare, set below
+
+            local function refreshSavedLbl()
+                local n = getSelectedCount()
+                if n == 0 then
+                    savedLbl.Text = "Targets: none selected"
+                    savedLbl.TextColor3 = Color3.fromRGB(90,110,190)
+                else
+                    savedLbl.Text = "Targets: "..n.." player"..(n==1 and "" or "s").." selected ✔"
+                    savedLbl.TextColor3 = Color3.fromRGB(75,215,115)
+                end
+            end
+
+            -- Saved ID label (repurposed as target count label)
+            savedLbl = Instance.new("TextLabel",mf)
+            savedLbl.Size = UDim2.new(1,-28,0,18)
+            savedLbl.Position = UDim2.new(0,14,0,52)
+            savedLbl.BackgroundTransparency = 1
+            savedLbl.Font = Enum.Font.Gotham
+            savedLbl.Text = "Targets: none selected"
+            savedLbl.TextColor3 = Color3.fromRGB(90,110,190)
+            savedLbl.TextSize = 11
+            savedLbl.TextXAlignment = Enum.TextXAlignment.Left
+            savedLbl.ZIndex = 3
+
+            -- Players list btn (shown first)
+            local menuB = Instance.new("TextButton",mf)
+            menuB.Size = UDim2.new(1,-28,0,34)
+            menuB.Position = UDim2.new(0,14,0,76)
+            menuB.BackgroundColor3 = Color3.fromRGB(18,22,42)
+            menuB.BorderSizePixel = 0
+            menuB.Text = "👥  Select Players to Farm  ▾"
+            menuB.TextColor3 = Color3.fromRGB(110,150,255)
+            menuB.TextSize = 13 menuB.Font = Enum.Font.GothamBold
+            menuB.ZIndex = 3
+            Instance.new("UICorner",menuB).CornerRadius = UDim.new(0,8)
+            local mStroke = Instance.new("UIStroke",menuB)
+            mStroke.Color = Color3.fromRGB(55,75,195) mStroke.Thickness = 1.2 mStroke.Transparency = 0.45
+
+            -- Toggle button
+            local toggleB = Instance.new("TextButton",mf)
+            toggleB.Size = UDim2.new(1,-28,0,36)
+            toggleB.Position = UDim2.new(0,14,0,118)
+            toggleB.BackgroundColor3 = Color3.fromRGB(28,55,195)
+            toggleB.BorderSizePixel = 0
+            toggleB.Text = "▶  Start Alt Farm Script"
+            toggleB.TextColor3 = Color3.fromRGB(215,230,255)
+            toggleB.TextSize = 13 toggleB.Font = Enum.Font.GothamBold
+            toggleB.ZIndex = 3
+            Instance.new("UICorner",toggleB).CornerRadius = UDim.new(0,10)
+
+            -- ══════════════════════════════════════════
+            --  PLAYER SELECTOR POPUP
+            -- ══════════════════════════════════════════
+            local plFrame = Instance.new("Frame",sGui)
+            plFrame.Size = UDim2.new(0,320,0,260)
+            plFrame.Position = UDim2.new(0.5,-160,0.5,-130)
+            plFrame.BackgroundColor3 = Color3.fromRGB(14,14,22)
+            plFrame.BorderSizePixel = 0
+            plFrame.Visible = false plFrame.ZIndex = 15
+            Instance.new("UICorner",plFrame).CornerRadius = UDim.new(0,12)
+            local pStroke2 = Instance.new("UIStroke",plFrame)
+            pStroke2.Color = Color3.fromRGB(50,65,180) pStroke2.Thickness = 1.2
+
+            -- popup title
+            local plTitle = Instance.new("TextLabel",plFrame)
+            plTitle.Size = UDim2.new(1,-42,0,32)
+            plTitle.Position = UDim2.new(0,12,0,0)
+            plTitle.BackgroundTransparency = 1
+            plTitle.Font = Enum.Font.GothamBold
+            plTitle.Text = "👥 Select Players to Farm"
+            plTitle.TextColor3 = Color3.fromRGB(180,210,255)
+            plTitle.TextSize = 13
+            plTitle.TextXAlignment = Enum.TextXAlignment.Left
+            plTitle.ZIndex = 16
+
+            -- close popup button
+            local plClose = Instance.new("TextButton",plFrame)
+            plClose.Size = UDim2.new(0,26,0,26)
+            plClose.Position = UDim2.new(1,-32,0,3)
+            plClose.BackgroundColor3 = Color3.fromRGB(180,30,30)
+            plClose.BackgroundTransparency = 0.3
+            plClose.Text = "✕" plClose.TextColor3 = Color3.fromRGB(255,200,200)
+            plClose.TextSize = 13 plClose.Font = Enum.Font.GothamBold
+            plClose.ZIndex = 17
+            Instance.new("UICorner",plClose).CornerRadius = UDim.new(1,0)
+            plClose.MouseButton1Click:Connect(function()
+                plFrame.Visible = false
+            end)
+
+            -- Select All / Clear All row
+            local selAllB = Instance.new("TextButton",plFrame)
+            selAllB.Size = UDim2.new(0.48,-4,0,24)
+            selAllB.Position = UDim2.new(0,8,0,34)
+            selAllB.BackgroundColor3 = Color3.fromRGB(22,55,130)
+            selAllB.BorderSizePixel = 0
+            selAllB.Text = "✔ Select All"
+            selAllB.TextColor3 = Color3.fromRGB(180,210,255)
+            selAllB.TextSize = 11 selAllB.Font = Enum.Font.GothamBold
+            selAllB.ZIndex = 17
+            Instance.new("UICorner",selAllB).CornerRadius = UDim.new(0,6)
+
+            local clearAllB = Instance.new("TextButton",plFrame)
+            clearAllB.Size = UDim2.new(0.48,-4,0,24)
+            clearAllB.Position = UDim2.new(0.52,0,0,34)
+            clearAllB.BackgroundColor3 = Color3.fromRGB(130,22,22)
+            clearAllB.BorderSizePixel = 0
+            clearAllB.Text = "✕ Clear All"
+            clearAllB.TextColor3 = Color3.fromRGB(255,180,180)
+            clearAllB.TextSize = 11 clearAllB.Font = Enum.Font.GothamBold
+            clearAllB.ZIndex = 17
+            Instance.new("UICorner",clearAllB).CornerRadius = UDim.new(0,6)
+
+            -- scrolling list
+            local scrollF = Instance.new("ScrollingFrame",plFrame)
+            scrollF.Size = UDim2.new(1,-10,1,-68)
+            scrollF.Position = UDim2.new(0,5,0,62)
+            scrollF.BackgroundTransparency = 1
+            scrollF.BorderSizePixel = 0
+            scrollF.ScrollBarThickness = 3
+            scrollF.ScrollBarImageColor3 = Color3.fromRGB(80,120,255)
+            scrollF.ZIndex = 16
+            local listLayout = Instance.new("UIListLayout",scrollF)
+            listLayout.Padding = UDim.new(0,4)
+
+            -- Build / refresh the checkbox list
+            local function updatePList()
+                for _, ch in pairs(scrollF:GetChildren()) do
+                    if ch:IsA("Frame") then ch:Destroy() end
+                end
+                local plrs = Players:GetPlayers()
+                for _, p in pairs(plrs) do
+                    local isSelected = selectedTargets[p.UserId] ~= nil
+
+                    local row = Instance.new("Frame",scrollF)
+                    row.Size = UDim2.new(1,-8,0,30)
+                    row.BackgroundColor3 = isSelected and Color3.fromRGB(20,45,120) or Color3.fromRGB(20,22,40)
+                    row.BorderSizePixel = 0
+                    row.ZIndex = 17
+                    Instance.new("UICorner",row).CornerRadius = UDim.new(0,6)
+                    if isSelected then
+                        local rs = Instance.new("UIStroke",row)
+                        rs.Color = Color3.fromRGB(70,120,255) rs.Thickness = 1
+                    end
+
+                    -- checkbox indicator
+                    local chkBox = Instance.new("Frame",row)
+                    chkBox.Size = UDim2.new(0,16,0,16)
+                    chkBox.Position = UDim2.new(0,8,0.5,-8)
+                    chkBox.BackgroundColor3 = isSelected and Color3.fromRGB(60,130,255) or Color3.fromRGB(35,35,65)
+                    chkBox.BorderSizePixel = 0 chkBox.ZIndex = 18
+                    Instance.new("UICorner",chkBox).CornerRadius = UDim.new(0,4)
+                    local chkTick = Instance.new("TextLabel",chkBox)
+                    chkTick.Size = UDim2.fromScale(1,1)
+                    chkTick.BackgroundTransparency = 1
+                    chkTick.Text = isSelected and "✔" or ""
+                    chkTick.TextColor3 = Color3.fromRGB(255,255,255)
+                    chkTick.TextSize = 11 chkTick.Font = Enum.Font.GothamBold
+                    chkTick.ZIndex = 19
+
+                    -- player name label
+                    local nameLbl = Instance.new("TextLabel",row)
+                    nameLbl.Size = UDim2.new(1,-36,1,0)
+                    nameLbl.Position = UDim2.new(0,32,0,0)
+                    nameLbl.BackgroundTransparency = 1
+                    nameLbl.Font = Enum.Font.Gotham
+                    nameLbl.Text = p.Name.."  ("..p.UserId..")"
+                    nameLbl.TextColor3 = isSelected and Color3.fromRGB(155,210,255) or Color3.fromRGB(130,150,200)
+                    nameLbl.TextSize = 12
+                    nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                    nameLbl.ZIndex = 18
+
+                    -- click to toggle selection
+                    local clickBtn = Instance.new("TextButton",row)
+                    clickBtn.Size = UDim2.fromScale(1,1)
+                    clickBtn.BackgroundTransparency = 1
+                    clickBtn.Text = "" clickBtn.ZIndex = 20
+                    clickBtn.MouseButton1Click:Connect(function()
+                        if selectedTargets[p.UserId] then
+                            selectedTargets[p.UserId] = nil
+                        else
+                            selectedTargets[p.UserId] = p.Name
+                        end
+                        refreshSavedLbl()
+                        updatePList() -- redraw with new state
+                    end)
+                end
+                scrollF.CanvasSize = UDim2.new(0,0,0,#plrs*34+4)
+            end
+
+            -- Select All
+            selAllB.MouseButton1Click:Connect(function()
+                for _, p in pairs(Players:GetPlayers()) do
+                    selectedTargets[p.UserId] = p.Name
+                end
+                refreshSavedLbl()
+                updatePList()
+            end)
+
+            -- Clear All
+            clearAllB.MouseButton1Click:Connect(function()
+                table.clear(selectedTargets)
+                refreshSavedLbl()
+                updatePList()
+            end)
+
+            Players.PlayerAdded:Connect(function() if plFrame.Visible then updatePList() end end)
+            Players.PlayerRemoving:Connect(function(p)
+                selectedTargets[p.UserId] = nil
+                refreshSavedLbl()
+                if plFrame.Visible then updatePList() end
+            end)
+
+            -- Open player selector
+            menuB.MouseButton1Click:Connect(function()
+                plFrame.Visible = true
+                updatePList()
+            end)
+
+            -- Start / Stop toggle
+            toggleB.MouseButton1Click:Connect(function()
+                if getSelectedCount() == 0 then
+                    GuiSvc:SetCore("SendNotification", {Title="Alt Farm", Text="Select at least one player first!"})
+                    return
+                end
+                isScriptActive = not isScriptActive
+                if isScriptActive then
+                    toggleB.Text = "■  Stop Alt Farm Script"
+                    toggleB.BackgroundColor3 = Color3.fromRGB(175,28,28)
+                    statusLbl.Text = "● ACTIVE"
+                    statusLbl.TextColor3 = Color3.fromRGB(75,215,115)
+                    statusBadge.BackgroundColor3 = Color3.fromRGB(8,26,8)
+                    sStroke.Color = Color3.fromRGB(55,195,95)
+                    if not monitorCoro or coroutine.status(monitorCoro) == "dead" then
+                        monitorCoro = coroutine.create(function() pcall(monitorTarget) end)
+                        coroutine.resume(monitorCoro)
+                    end
+                    local n = getSelectedCount()
+                    GuiSvc:SetCore("SendNotification", {Title="Alt Farm", Text="🔥 Farming "..n.." player"..(n==1 and "" or "s").."!"})
+                else
+                    toggleB.Text = "▶  Start Alt Farm Script"
+                    toggleB.BackgroundColor3 = Color3.fromRGB(28,55,195)
+                    statusLbl.Text = "● IDLE"
+                    statusLbl.TextColor3 = Color3.fromRGB(110,110,170)
+                    statusBadge.BackgroundColor3 = Color3.fromRGB(18,18,28)
+                    sStroke.Color = Color3.fromRGB(70,70,170)
+                    GuiSvc:SetCore("SendNotification", {Title="Alt Farm", Text="Stopped."})
+                end
+            end)
+
+            refreshSavedLbl()
+
+            -- Slide-in animation
+            mf.BackgroundTransparency = 1
+            TweenService:Create(mf, TweenInfo.new(0.45,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {
+                Position = UDim2.new(0.5,0,0.5,0),
+                BackgroundTransparency = 0
+            }):Play()
+
+            GuiSvc:SetCore("SendNotification", {Title="Alt Farm", Text="✅ GUI + background systems running!", Duration=4})
+        end)
+    end,
+})
+
+-- ══════════════════════════════════════════
+--  ALT BALANT SECTION
+-- ══════════════════════════════════════════
+
+UtilityTab:CreateSection("Alt Balant")
+
+local function getServerPlayers()
+    local list = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then table.insert(list, p.Name) end
+    end
+    if #list == 0 then table.insert(list, "No players found") end
+    return list
+end
+
+local altBalantDropdown = UtilityTab:CreateDropdown({
+    Name = "👥 Alt Balant Player List",
+    Options = getServerPlayers(),
+    CurrentOption = {""},
+    MultipleOptions = false,
+    Flag = "AltBalantTarget",
+    Callback = function(selected)
+        altBalantTarget = type(selected) == "table" and (selected[1] or "") or (selected or "")
+    end,
+})
+
+UtilityTab:CreateButton({
+    Name = "🔄 Refresh Player List",
+    Callback = function()
+        local newList = getServerPlayers()
+        altBalantDropdown:Refresh(newList, true)
+        Rayfield:Notify({ Title="Alt Balant", Content="Refreshed! ("..#newList.." players)", Duration=2, Image=4483362458 })
+    end,
+})
+
+UtilityTab:CreateToggle({
+    Name = "💥 Alt Balant", CurrentValue = false, Flag = "AltBalant",
+    Callback = function(val)
+        altBalantActive = val
+        if val then
+            if altBalantTarget == "" or altBalantTarget == "No players found" then
+                Rayfield:Notify({ Title="Alt Balant", Content="Select a target first!", Duration=3, Image=4483362458 })
+                altBalantActive = false return
+            end
+            altBalantBusy = false
+            task.spawn(function()
+                while altBalantActive do
+                    if not altBalantBusy then
+                        altBalantBusy = true
+                        local char   = player.Character
+                        local myHRP  = char and char:FindFirstChild("HumanoidRootPart")
+                        local tgt    = Players:FindFirstChild(altBalantTarget)
+                        local tgtHRP = tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart")
+                        if myHRP and tgtHRP then
+                            myHRP.CFrame = tgtHRP.CFrame * CFrame.new(0,0,-2)
+                            task.wait(2)
+                            if altBalantActive then
+                                player:LoadCharacter()
+                                player.CharacterAdded:Wait()
+                                task.wait(0.5)
+                            end
+                        else
+                            task.wait(0.5)
+                        end
+                        altBalantBusy = false
+                    end
+                    task.wait(0.1)
+                end
+            end)
+            Rayfield:Notify({ Title="Alt Balant", Content="Locked onto: "..altBalantTarget.." 🔥", Duration=3, Image=4483362458 })
+        else
+            altBalantBusy = false
+            Rayfield:Notify({ Title="Alt Balant", Content="Disabled.", Duration=2, Image=4483362458 })
+        end
+    end,
+})
+
+-- ══════════════════════════════════════════
+--  XCZ Function
+-- ══════════════════════════════════════════
+local function doXCZ()
+    if xczCooldown then return end
+    xczCooldown = true
+    local char = player.Character
+    if not char then xczCooldown = false return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then xczCooldown = false return end
+    VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.Four, false, game) task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Four, false, game) task.wait(0.1)
+    VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.W,    false, game) task.wait(0.01)
+    VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.Q,    false, game) task.wait(0.03)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q,    false, game) task.wait(0.04)
+    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.pi, 0) task.wait(0.03)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.W,    false, game) task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.One,  false, game) task.wait(0.02)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One,  false, game) task.wait(0.5)
+    xczCooldown = false
+end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.E and xczEnabled then task.spawn(doXCZ) end
+end)
+
+-- ══════════════════════════════════════════
+--  M1 Spam Loop
+-- ══════════════════════════════════════════
+task.spawn(function()
+    local punchCount = 0
+    while true do
+        if m1Spam then
+            local char = player.Character
+            if char then
+                local ss = workspace.CurrentCamera.ViewportSize
+                VirtualInputManager:SendMouseButtonEvent(ss.X*0.93, ss.Y*0.50, 0, true,  game, 1) task.wait(0.05)
+                VirtualInputManager:SendMouseButtonEvent(ss.X*0.93, ss.Y*0.50, 0, false, game, 1)
+                VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.One, false, game) task.wait(0.02)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                punchCount = punchCount + 1
+                if xczEnabled and not xczCooldown and punchCount >= 4 then
+                    punchCount = 0 task.spawn(doXCZ)
+                end
+            end
+            task.wait(m1Delay)
+        else
+            punchCount = 0 task.wait(0.05)
+        end
+    end
+end)
+
+-- ══════════════════════════════════════════
+--  Loop Goto Heartbeat
+-- ══════════════════════════════════════════
+RunService.Heartbeat:Connect(function()
+    if loopGoto and loopTargetName ~= "" then
+        local target = Players:FindFirstChild(loopTargetName)
+        if target and target.Character then
+            local tHRP = target.Character:FindFirstChild("HumanoidRootPart")
+            local mHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if tHRP and mHRP then mHRP.CFrame = tHRP.CFrame * CFrame.new(0,0,-2) end
+        end
+    end
+end)
+
+-- ══════════════════════════════════════════
+--  Key Spam Loop
+-- ══════════════════════════════════════════
+task.spawn(function()
+    while true do
+        if keySpam then
+            for _, k in ipairs({Enum.KeyCode.One,Enum.KeyCode.Two,Enum.KeyCode.Three,Enum.KeyCode.Four}) do
+                if not keySpam then break end
+                VirtualInputManager:SendKeyEvent(true,  k, false, game) task.wait(0.02)
+                VirtualInputManager:SendKeyEvent(false, k, false, game) task.wait(spamDelay)
+            end
+        else
+            task.wait(0.05)
+        end
+    end
+end)
+
+-- ══════════════════════════════════════════
+--  Character Setup
+-- ══════════════════════════════════════════
+local function setupChar(char)
+    if not char then return end
+    local hum = char:WaitForChild("Humanoid")
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    if deathTP and lastDeathCFrame then task.wait(0.15) hrp.CFrame = lastDeathCFrame end
+    hum.Died:Connect(function()
+        lastDeathCFrame = hrp.CFrame
+        if autoReset then task.wait(resetDelay) player:LoadCharacter() end
+    end)
+end
+
+if player.Character then setupChar(player.Character) end
+player.CharacterAdded:Connect(setupChar)
+
+Rayfield:LoadConfiguration()
